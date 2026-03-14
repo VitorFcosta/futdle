@@ -20,14 +20,28 @@ void main() async {
   runApp(const MeuAppDeTeste());
 }
 
-class MeuAppDeTeste extends StatefulWidget {
+// Widget principal que inicia o MaterialApp
+class MeuAppDeTeste extends StatelessWidget {
   const MeuAppDeTeste({super.key});
 
   @override
-  State<MeuAppDeTeste> createState() => _MeuAppDeTesteState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const FutdleHomePage(),
+    );
+  }
 }
 
-class _MeuAppDeTesteState extends State<MeuAppDeTeste> {
+// Tela principal que contém o Scaffold (Necessário para o ScaffoldMessenger)
+class FutdleHomePage extends StatefulWidget {
+  const FutdleHomePage({super.key});
+
+  @override
+  State<FutdleHomePage> createState() => _FutdleHomePageState();
+}
+
+class _FutdleHomePageState extends State<FutdleHomePage> {
   // Variável que diz para a tela se o botão está carregando ou não
   bool _isLoading = false;
 
@@ -71,28 +85,25 @@ class _MeuAppDeTesteState extends State<MeuAppDeTeste> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Teste FutDle: Melhorado'),
-          backgroundColor: Colors.green[700],
-        ),
-        body: Center(
-          child: _isLoading 
-            ? const CircularProgressIndicator(color: Colors.green,) // Bolinha de carregamento
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(20),
-                  backgroundColor: Colors.black,
-                ),
-                onPressed: _sortearJogador, // Chama nossa nova função
-                child: const Text(
-                  'Puxar Jogador e Salvar no Firebase',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Teste FutDle: Melhorado'),
+        backgroundColor: Colors.green[700],
+      ),
+      body: Center(
+        child: _isLoading 
+          ? const CircularProgressIndicator(color: Colors.green,) // Bolinha de carregamento
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(20),
+                backgroundColor: Colors.black,
               ),
-        ),
+              onPressed: _sortearJogador, // Chama nossa nova função
+              child: const Text(
+                'Puxar Jogador e Salvar no Firebase',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
       ),
     );
   }
