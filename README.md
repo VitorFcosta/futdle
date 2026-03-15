@@ -70,6 +70,7 @@ flutter run
 ---
 
 ## 📱 Prints da Aplicação
+- Telas prototipo
 - Tela de Login
 - Tela Inicial
 - Tela de Jogo (Gameplay)
