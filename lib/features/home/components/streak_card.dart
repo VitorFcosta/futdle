@@ -32,10 +32,7 @@ class StreakCard extends StatelessWidget {
       child: Column(
         children: [
           // Título da seção — usa titleLarge do tema (fonte Outfit)
-          Text(
-            'Streaks de vitórias',
-            style: theme.titleLarge,
-          ),
+          Text('Streaks de vitórias', style: theme.titleLarge),
           const SizedBox(height: 24),
           IntrinsicHeight(
             child: Row(
@@ -52,10 +49,7 @@ class StreakCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       // Subtítulo — usa titleMedium do tema (Outfit)
-                      Text(
-                        'Maior streak',
-                        style: theme.titleMedium,
-                      ),
+                      Text('Maior streak', style: theme.titleMedium),
                       const SizedBox(height: 8),
                       // Número grande com cor laranja de destaque
                       // O número é o foco visual principal desta seção
@@ -132,4 +126,3 @@ class StreakCard extends StatelessWidget {
     );
   }
 }
-

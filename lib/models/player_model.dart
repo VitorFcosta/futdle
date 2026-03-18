@@ -19,7 +19,7 @@ class PlayerModel {
     final player = json['player'];
     final statsList = json['statistics'] as List?;
     PlayerStatistics? stats;
-    
+
     if (statsList != null && statsList.isNotEmpty) {
       stats = PlayerStatistics.fromJson(statsList[0]);
     }
@@ -52,11 +52,7 @@ class PlayerStatistics {
   final String? leagueName;
   final String? position;
 
-  PlayerStatistics({
-    this.teamName,
-    this.leagueName,
-    this.position,
-  });
+  PlayerStatistics({this.teamName, this.leagueName, this.position});
 
   factory PlayerStatistics.fromJson(Map<String, dynamic> json) {
     return PlayerStatistics(

@@ -27,10 +27,10 @@ enum GuessResult {
 
 /// Direção da seta para a comparação de idade.
 enum AgeDirection {
-  /// O jogador misterioso é mais velho 
+  /// O jogador misterioso é mais velho
   higher,
 
-  /// O jogador misterioso é mais novo 
+  /// O jogador misterioso é mais novo
   lower,
 
   /// Idade igual
@@ -81,8 +81,10 @@ class WordleGameLogic {
         (target['name'] as String).toLowerCase();
 
     // Compara nacionalidade: igual → correct, senão → wrong
-    final nationalityResult =
-        _compareString(guess['nationality'], target['nationality']);
+    final nationalityResult = _compareString(
+      guess['nationality'],
+      target['nationality'],
+    );
 
     // Compara liga: igual → correct, senão → wrong
     final leagueResult = _compareString(guess['league'], target['league']);
@@ -99,8 +101,10 @@ class WordleGameLogic {
     }
 
     // Compara posição: igual → correct, senão → wrong
-    final positionResult =
-        _compareString(guess['position'], target['position']);
+    final positionResult = _compareString(
+      guess['position'],
+      target['position'],
+    );
 
     // Compara idade: igual → correct, diferença ≤ 2 → partial, senão → wrong
     final guessAge = guess['age'] as int? ?? 0;

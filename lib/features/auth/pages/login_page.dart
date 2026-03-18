@@ -96,11 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // ===== LOGO / TÍTULO =====
                   // Ícone de futebol grande como "logo" do app
-                  Icon(
-                    Icons.sports_soccer,
-                    size: 64,
-                    color: AppColors.primary,
-                  ),
+                  Icon(Icons.sports_soccer, size: 64, color: AppColors.primary),
                   const SizedBox(height: 16),
                   // Título "FutDLE" com a fonte Outfit (mesma do header da Home)
                   Text(
@@ -249,7 +245,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: AppColors.dark.withValues(alpha: 0.3), width: 1.5),
+        borderSide: BorderSide(
+          color: AppColors.dark.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),

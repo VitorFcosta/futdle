@@ -5,6 +5,7 @@ import 'package:futdle/features/home/components/daily_games_grid.dart';
 import 'package:futdle/features/home/components/streak_card.dart';
 import 'package:futdle/models/mini_game_model.dart';
 import 'package:futdle/core/theme/app_colors.dart';
+
 /// Página inicial do Futdle.
 /// Exibe o header (com nome real do usuário), grade de mini jogos diários e card de streaks.
 ///
@@ -16,10 +17,6 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.username});
 
   @override
-
-
-
-  
   Widget build(BuildContext context) {
     final games = MiniGameModel.defaultGames();
     final authService = AuthService();
@@ -47,4 +44,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-

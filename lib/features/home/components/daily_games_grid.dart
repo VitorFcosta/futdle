@@ -62,8 +62,8 @@ class _GameCircle extends StatelessWidget {
     final borderColor = game.isCompleted
         ? AppColors.success
         : isLocked
-            ? AppColors.grey
-            : AppColors.dark;
+        ? AppColors.grey
+        : AppColors.dark;
 
     return Opacity(
       opacity: isLocked ? 0.45 : 1.0,
@@ -99,7 +99,11 @@ class _GameCircle extends StatelessWidget {
                 if (game.isCompleted)
                   const Padding(
                     padding: EdgeInsets.only(top: 4),
-                    child: Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                    child: Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: AppColors.success,
+                    ),
                   ),
               ],
             ),
@@ -109,4 +113,3 @@ class _GameCircle extends StatelessWidget {
     );
   }
 }
-

@@ -64,9 +64,11 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
 
       // Filtra jogadores já palpitados
       final filtered = results
-          .where((p) => !widget.guessedNames
-              .map((n) => n.toLowerCase())
-              .contains((p['name'] as String).toLowerCase()))
+          .where(
+            (p) => !widget.guessedNames
+                .map((n) => n.toLowerCase())
+                .contains((p['name'] as String).toLowerCase()),
+          )
           .toList();
 
       setState(() {
@@ -102,10 +104,7 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
           controller: _controller,
           enabled: widget.enabled,
           onChanged: _search,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 14,
-            color: AppColors.dark,
-          ),
+          style: GoogleFonts.jetBrainsMono(fontSize: 14, color: AppColors.dark),
           decoration: InputDecoration(
             hintText: 'Digite o nome do jogador...',
             hintStyle: GoogleFonts.jetBrainsMono(
@@ -150,9 +149,7 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.dark.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: AppColors.dark.withValues(alpha: 0.2)),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.dark.withValues(alpha: 0.1),

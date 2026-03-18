@@ -58,7 +58,8 @@ class _WordlePageState extends State<WordlePage> {
 
       if (player == null) {
         setState(() {
-          _errorMessage = 'Nenhum jogador do dia encontrado.\n'
+          _errorMessage =
+              'Nenhum jogador do dia encontrado.\n'
               'Execute o sorteio primeiro (GameManager.randomPlayer).';
           _isLoading = false;
         });
@@ -124,8 +125,8 @@ class _WordlePageState extends State<WordlePage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-                ? _buildError()
-                : _buildGame(),
+            ? _buildError()
+            : _buildGame(),
       ),
     );
   }
@@ -198,15 +199,12 @@ class _WordlePageState extends State<WordlePage> {
                     horizontal: 12,
                     vertical: 8,
                   ),
-                  itemCount: _guesses.length +
-                      (_hasWon ? 1 : 0) +
-                      (_hasLost ? 1 : 0),
+                  itemCount:
+                      _guesses.length + (_hasWon ? 1 : 0) + (_hasLost ? 1 : 0),
                   itemBuilder: (context, index) {
                     // Mensagem de vitória/derrota no final
                     if (index == _guesses.length) {
-                      return _hasWon
-                          ? _buildWinMessage()
-                          : _buildLoseMessage();
+                      return _hasWon ? _buildWinMessage() : _buildLoseMessage();
                     }
                     return PlayerGuessRow(comparison: _guesses[index]);
                   },
@@ -382,10 +380,7 @@ class _WordlePageState extends State<WordlePage> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 10,
-            color: AppColors.grey,
-          ),
+          style: GoogleFonts.jetBrainsMono(fontSize: 10, color: AppColors.grey),
         ),
       ],
     );

@@ -14,11 +14,9 @@ class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
 
-  AuthService({
-    FirebaseAuth? auth,
-    FirebaseFirestore? db,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _db = db ?? FirebaseFirestore.instance;
+  AuthService({FirebaseAuth? auth, FirebaseFirestore? db})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _db = db ?? FirebaseFirestore.instance;
 
   /// Retorna o usuário logado atualmente, ou `null` se não estiver logado.
   User? get currentUser => _auth.currentUser;

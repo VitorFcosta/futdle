@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:futdle/core/theme/app_colors.dart';
+import 'package:futdle/features/admin/pages/admin_page.dart';
 
 /// Cabeçalho da Home com logo do app, avatar do usuário e botão de logout.
 ///
@@ -54,12 +55,27 @@ class HomeHeader extends StatelessWidget {
                   color: AppColors.dark,
                 ),
               ),
+              // Botão do Admin
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminPage()),
+                  );
+                },
+                child: const Icon(
+                  Icons.admin_panel_settings,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
               // Botão de logout (só aparece se onLogout não for null)
               if (onLogout != null) ...[
                 const SizedBox(width: 12),
                 GestureDetector(
                   onTap: onLogout,
-                  child: Icon(
+                  child: const Icon(
                     Icons.logout,
                     color: AppColors.grey,
                     size: 22,

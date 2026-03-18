@@ -21,7 +21,9 @@ class ImportPlayers {
         uniquePlayers.add(Map<String, dynamic>.from(player));
       }
     }
-    AppLogger.info('${uniquePlayers.length} jogadores únicos após remover duplicatas.');
+    AppLogger.info(
+      '${uniquePlayers.length} jogadores únicos após remover duplicatas.',
+    );
 
     int imported = 0;
     const int batchSize = 500;
@@ -55,7 +57,9 @@ class ImportPlayers {
       AppLogger.info('Batch importado: $imported/${uniquePlayers.length}');
     }
 
-    AppLogger.info('✅ Importação concluída! $imported jogadores salvos no Firestore.');
+    AppLogger.info(
+      ' Importação concluída! $imported jogadores salvos no Firestore.',
+    );
     return imported;
   }
 }

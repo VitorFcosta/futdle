@@ -273,7 +273,10 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: AppColors.dark.withValues(alpha: 0.3), width: 1.5),
+        borderSide: BorderSide(
+          color: AppColors.dark.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
