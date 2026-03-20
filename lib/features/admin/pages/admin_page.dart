@@ -22,7 +22,7 @@ class _AdminPageState extends State<AdminPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🎉 Jogador do dia sorteado com sucesso da API!'),
+            content: Text('Jogador do dia sorteado com sucesso da API!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 4),
           ),
@@ -51,7 +51,7 @@ class _AdminPageState extends State<AdminPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Painel de Controle'),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.dark,
         elevation: 0,
       ),
       body: Center(

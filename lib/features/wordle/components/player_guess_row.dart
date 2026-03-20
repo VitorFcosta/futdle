@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:futdle/core/theme/app_colors.dart';
+import 'package:futdle/core/utils/country_code_mapper.dart';
 import 'package:futdle/features/wordle/wordle_game_logic.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:country_flags/country_flags.dart';
 
 /// Widget que renderiza uma linha de palpite no Wordle.
 ///
@@ -43,9 +45,8 @@ class PlayerGuessRow extends StatelessWidget {
           // Linha com as 5 caixas de comparação
           Row(
             children: [
-              _AttributeBox(
-                label: '🌍',
-                value: _shortenText(guess['nationality'] ?? '?', 5),
+              _CountryBox(
+                nationality: guess['nationality'] ?? '?',
                 result: comparison.nationalityResult,
               ),
               const SizedBox(width: 4),
@@ -141,6 +142,73 @@ class _AttributeBox extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _colorForResult(GuessResult result) {
+    switch (result) {
+      case GuessResult.correct:
+        return AppColors.success;
+      case GuessResult.partial:
+        return AppColors.warning;
+      case GuessResult.wrong:
+        return AppColors.error;
+    }
+  }
+}
+
+/// Caixa especial de nacionalidade que mostra a bandeira e o nome em baixo.
+class _CountryBox extends StatelessWidget {
+  final String nationality;
+  final GuessResult result;
+
+  const _CountryBox({
+    required this.nationality,
+    required this.result,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        decoration: BoxDecoration(
+          color: _colorForResult(result),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: SizedBox(
+                width: 24,
+                height: 18,
+                child: CountryFlag.fromCountryCode(
+                  CountryCodeMapper.getIsoCode(nationality),
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _shortenText(nationality, 5),
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Encurta texto longo para caber na caixa.
+  String _shortenText(String text, int max) {
+    if (text.length <= max) return text;
+    return '${text.substring(0, max - 1)}…';
   }
 
   Color _colorForResult(GuessResult result) {
