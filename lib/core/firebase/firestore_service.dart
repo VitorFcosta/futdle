@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/player_model.dart';
+import '../../models/user_stats.dart';
 import '../exceptions/app_exceptions.dart';
 
 /// Serviço responsável por toda interação com o Firestore.
@@ -38,8 +39,20 @@ class FirestoreService {
   /// Usado pelo [GameManager] para salvar o jogador sorteado.
   Future<void> saveDailyPlayerFromMap(Map<String, dynamic> playerData) async {
     try {
+      final now = DateTime.now();
+      final dateId = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      // Salva no doc 'today' (acesso rápido à partida atual)
       await _db.collection('daily_player').doc('today').set({
         ...playerData,
+        'dateId': dateId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Salva no histórico para o WordleHistoryPage
+      await _db.collection('daily_history').doc(dateId).set({
+        ...playerData,
+        'dateId': dateId,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -91,5 +104,44 @@ class FirestoreService {
               .contains(queryLower),
         )
         .toList();
+  }
+
+  // ==========================================
+  // STREAK & HISTÓRICO
+  // ==========================================
+
+  /// Busca os status do usuário autenticado no banco.
+  Future<UserStats> getUserStats(String uid) async {
+    try {
+      final doc = await _db.collection('user_stats').doc(uid).get();
+      if (doc.exists && doc.data() != null) {
+        return UserStats.fromJson(doc.data()!);
+      }
+      return UserStats();
+    } catch (e) {
+      throw FirestoreException('Erro ao buscar stats do usuário: $e');
+    }
+  }
+
+  /// Salva ou atualiza os status do usuário.
+  Future<void> updateUserStats(String uid, UserStats stats) async {
+    try {
+      await _db.collection('user_stats').doc(uid).set(stats.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      throw FirestoreException('Erro ao salvar stats do usuário: $e');
+    }
+  }
+
+  /// Busca histórico de dias recentes, limitado a 30 dias passados.
+  Future<List<Map<String, dynamic>>> getDailyHistory() async {
+    try {
+      final snapshot = await _db.collection('daily_history')
+          .orderBy('dateId', descending: true)
+          .limit(30)
+          .get();
+      return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    } catch (e) {
+      throw FirestoreException('Erro ao buscar histórico diário: $e');
+    }
   }
 }

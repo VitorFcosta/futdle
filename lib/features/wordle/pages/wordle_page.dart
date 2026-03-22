@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:futdle/core/firebase/auth_service.dart';
 import 'package:futdle/core/firebase/firestore_service.dart';
 import 'package:futdle/core/theme/app_colors.dart';
 import 'package:futdle/features/wordle/wordle_game_logic.dart';
 import 'package:futdle/features/wordle/components/player_guess_row.dart';
 import 'package:futdle/features/wordle/components/player_search_field.dart';
+import 'package:futdle/features/wordle/components/wordle_stats_modal.dart';
+import 'package:futdle/models/user_stats.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Tela principal do Jogo Wordle do FutDLE.
-///
-/// ## Fluxo do jogo:
-///  Ao abrir, busca o jogador misterioso do dia no Firestore (`daily_player/today`)
-///  O usuário digita o nome de um jogador no campo de busca
-///  Ao selecionar, a lógica compara os atributos e mostra feedback colorido
-///  O jogador tem até 6 tentativas para adivinhar
-///  Se acertar → tela de vitória 🎉
-///  Se esgotar as tentativas → revela o jogador misterioso
-///
-/// ## Componentes usados:
-/// - [PlayerSearchField] → campo de busca com autocomplete
-/// - [PlayerGuessRow] → linha de feedback colorido por palpite
-/// - [WordleGameLogic] → lógica de comparação
 class WordlePage extends StatefulWidget {
-  const WordlePage({super.key});
+  final Map<String, dynamic>? targetPlayerToPlay;
+  final bool isDailyStreak;
+
+  const WordlePage({
+    super.key,
+    this.targetPlayerToPlay,
+    this.isDailyStreak = true,
+  });
 
   @override
   State<WordlePage> createState() => _WordlePageState();
@@ -29,41 +25,63 @@ class WordlePage extends StatefulWidget {
 
 class _WordlePageState extends State<WordlePage> {
   final _firestoreService = FirestoreService();
+  final _authService = AuthService();
 
-  /// Dados do jogador misterioso (do Firestore).
   Map<String, dynamic>? _targetPlayer;
-
-  /// Lista de comparações (palpites feitos).
   final List<GuessComparison> _guesses = [];
-
-  /// Lista de nomes já palpitados (para evitar repetição).
   final List<String> _guessedNames = [];
 
-  /// Estado do jogo.
   bool _isLoading = true;
   bool _hasWon = false;
   bool _hasLost = false;
+  bool _alreadyPlayedToday = false;
   String? _errorMessage;
+
+  UserStats? _userStats;
+  String? _dateId; // Data da partida (hoje ou historico)
 
   @override
   void initState() {
     super.initState();
-    _loadTargetPlayer();
+    _loadGame();
   }
 
-  /// Carrega o jogador misterioso do dia do Firestore.
-  Future<void> _loadTargetPlayer() async {
+  Future<void> _loadGame() async {
     try {
-      final player = await _firestoreService.getDailyPlayer();
+      final user = _authService.currentUser;
+      
+      // Carrega status apenas se for partida do dia (valendo streak)
+      if (widget.isDailyStreak && user != null) {
+        _userStats = await _firestoreService.getUserStats(user.uid);
+      }
+
+      Map<String, dynamic>? player;
+
+      if (widget.targetPlayerToPlay != null) {
+        player = widget.targetPlayerToPlay;
+        _dateId = player?['dateId']; // Vem do Firebase
+      } else {
+        player = await _firestoreService.getDailyPlayer();
+        _dateId = player?['dateId'];
+      }
 
       if (player == null) {
         setState(() {
-          _errorMessage =
-              'Nenhum jogador do dia encontrado.\n'
-              'Execute o sorteio primeiro (GameManager.randomPlayer).';
+          _errorMessage = 'Nenhum jogador encontrado para essa partida.';
           _isLoading = false;
         });
         return;
+      }
+
+      // Se for modo Diário, valida se o usuário já jogou hoje
+      if (widget.isDailyStreak && _userStats != null && _dateId != null) {
+        final last = _userStats!.lastPlayedDate;
+        if (last != null) {
+          final lastDateStr = '${last.year}-${last.month.toString().padLeft(2, '0')}-${last.day.toString().padLeft(2, '0')}';
+          if (lastDateStr == _dateId) {
+            _alreadyPlayedToday = true;
+          }
+        }
       }
 
       setState(() {
@@ -71,8 +89,17 @@ class _WordlePageState extends State<WordlePage> {
         _isLoading = false;
       });
 
-      // Pré-carrega a lista de jogadores para o autocomplete
       await _firestoreService.getAllPlayers();
+
+      // Se já concluiu o desafio hoje, trava o jogo e mostra a modal.
+      if (_alreadyPlayedToday) {
+        // Bloqueia interações do campo de busca mudando estados
+        _hasWon = true; 
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showResultsModal();
+        });
+      }
+
     } catch (e) {
       setState(() {
         _errorMessage = 'Erro ao carregar o jogo: $e';
@@ -81,11 +108,9 @@ class _WordlePageState extends State<WordlePage> {
     }
   }
 
-  /// Processa um palpite do jogador.
   void _onPlayerGuessed(Map<String, dynamic> guessPlayer) {
-    if (_targetPlayer == null || _hasWon || _hasLost) return;
+    if (_targetPlayer == null || _hasWon || _hasLost || _alreadyPlayedToday) return;
 
-    // Compara o palpite com o jogador misterioso
     final comparison = WordleGameLogic.compare(guessPlayer, _targetPlayer!);
 
     setState(() {
@@ -94,10 +119,70 @@ class _WordlePageState extends State<WordlePage> {
 
       if (comparison.isCorrect) {
         _hasWon = true;
+        _finishGame();
       } else if (_guesses.length >= WordleGameLogic.maxAttempts) {
         _hasLost = true;
+        _finishGame();
       }
     });
+  }
+
+  Future<void> _finishGame() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showResultsModal();
+    });
+
+    if (!widget.isDailyStreak) return;
+
+    final user = _authService.currentUser;
+    if (user == null || _userStats == null) return;
+
+    final stats = _userStats!;
+    
+    // Atualiza base dos Status Diários
+    final yesterdayStr = "${DateTime.now().subtract(const Duration(days: 1)).year}-${DateTime.now().subtract(const Duration(days: 1)).month.toString().padLeft(2, '0')}-${DateTime.now().subtract(const Duration(days: 1)).day.toString().padLeft(2, '0')}";
+    final lastPlayedStr = stats.lastPlayedDate != null 
+        ? "${stats.lastPlayedDate!.year}-${stats.lastPlayedDate!.month.toString().padLeft(2, '0')}-${stats.lastPlayedDate!.day.toString().padLeft(2, '0')}"
+        : null;
+
+    stats.gamesPlayed += 1;
+    stats.lastPlayedDate = DateTime.now();
+
+    if (_hasWon) {
+      stats.gamesWon += 1;
+
+      if (lastPlayedStr == yesterdayStr) {
+        stats.currentStreak += 1;
+      } else {
+        stats.currentStreak = 1; // Pulou um dia ou primeira vez: começa com 1
+      }
+
+      if (stats.currentStreak > stats.maxStreak) {
+        stats.maxStreak = stats.currentStreak;
+      }
+
+      final tries = _guesses.length;
+      stats.guessDistribution[tries] = (stats.guessDistribution[tries] ?? 0) + 1;
+    } else {
+      stats.currentStreak = 0;
+    }
+
+    try {
+      await _firestoreService.updateUserStats(user.uid, stats);
+    } catch (e) {
+      debugPrint("Erro ao salvar estastísticas do usuário: $e");
+    }
+  }
+
+  void _showResultsModal() {
+    WordleStatsModal.show(
+      context,
+      stats: _userStats ?? UserStats(),
+      guesses: _guesses,
+      isDailyStreak: widget.isDailyStreak,
+      hasWon: _guesses.isNotEmpty && _guesses.last.isCorrect,
+      dateId: _dateId ?? 'HOJE',
+    );
   }
 
   @override
@@ -112,7 +197,7 @@ class _WordlePageState extends State<WordlePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Wordle',
+          widget.isDailyStreak ? 'Wordle Diário' : 'Wordle Histórico',
           style: GoogleFonts.outfit(
             fontSize: 24,
             fontWeight: FontWeight.w800,
@@ -131,7 +216,6 @@ class _WordlePageState extends State<WordlePage> {
     );
   }
 
-  /// Tela de erro quando o jogador do dia não foi encontrado.
   Widget _buildError() {
     return Center(
       child: Padding(
@@ -155,17 +239,15 @@ class _WordlePageState extends State<WordlePage> {
     );
   }
 
-  /// Tela principal do jogo.
   Widget _buildGame() {
     return Column(
       children: [
-        // Header com legenda e tentativas restantes
+        // Header de informações
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Legenda das cores
               Row(
                 children: [
                   _legendDot(AppColors.success, 'Certo'),
@@ -175,24 +257,23 @@ class _WordlePageState extends State<WordlePage> {
                   _legendDot(AppColors.error, 'Errado'),
                 ],
               ),
-              // Contador de tentativas
-              Text(
-                '${_guesses.length}/${WordleGameLogic.maxAttempts}',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.dark,
+              if (!_alreadyPlayedToday)
+                Text(
+                  '${_guesses.length}/${WordleGameLogic.maxAttempts}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.dark,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
 
         const Divider(height: 1),
 
-        // Lista de palpites (scrollable)
         Expanded(
-          child: _guesses.isEmpty
+          child: _guesses.isEmpty && !_alreadyPlayedToday
               ? _buildEmptyState()
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(
@@ -200,41 +281,51 @@ class _WordlePageState extends State<WordlePage> {
                     vertical: 8,
                   ),
                   itemCount:
-                      _guesses.length + (_hasWon ? 1 : 0) + (_hasLost ? 1 : 0),
+                      _guesses.length + (_hasWon && !_alreadyPlayedToday ? 1 : 0) + (_hasLost && !_alreadyPlayedToday ? 1 : 0),
                   itemBuilder: (context, index) {
-                    // Mensagem de vitória/derrota no final
                     if (index == _guesses.length) {
-                      return _hasWon ? _buildWinMessage() : _buildLoseMessage();
+                      return _hasWon && !_alreadyPlayedToday ? _buildWinMessage() : _buildLoseMessage();
                     }
                     return PlayerGuessRow(comparison: _guesses[index]);
                   },
                 ),
         ),
 
-        // Campo de busca (no rodapé)
-        if (!_hasWon && !_hasLost)
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.dark.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: PlayerSearchField(
-              onPlayerSelected: _onPlayerGuessed,
-              guessedNames: _guessedNames,
-            ),
+        // Search Field ou Botão Ver Resultados
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.dark.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
+          child: _alreadyPlayedToday || _hasWon || _hasLost
+              ? SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _showResultsModal,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      backgroundColor: AppColors.primary,
+                    ),
+                    child: const Text('🌟 Ver Meus Resultados', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                )
+              : PlayerSearchField(
+                  onPlayerSelected: _onPlayerGuessed,
+                  guessedNames: _guessedNames,
+                ),
+        ),
       ],
     );
   }
 
-  /// Estado vazio — quando ainda não fez nenhum palpite.
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -272,7 +363,6 @@ class _WordlePageState extends State<WordlePage> {
     );
   }
 
-  /// Mensagem de vitória.
   Widget _buildWinMessage() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -314,7 +404,6 @@ class _WordlePageState extends State<WordlePage> {
     );
   }
 
-  /// Mensagem de derrota.
   Widget _buildLoseMessage() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -365,7 +454,6 @@ class _WordlePageState extends State<WordlePage> {
     );
   }
 
-  /// Bolinha de legenda das cores.
   Widget _legendDot(Color color, String label) {
     return Row(
       children: [

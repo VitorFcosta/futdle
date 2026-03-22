@@ -39,78 +39,77 @@ class PlayerGuessRow extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: AppColors.dark,
             ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          // Linha com as 5 caixas de comparação
-          Row(
-            children: [
-              _CountryBox(
-                nationality: guess['nationality'] ?? '?',
-                result: comparison.nationalityResult,
-              ),
-              const SizedBox(width: 4),
-              _AttributeBox(
-                label: '🏟️',
-                value: _shortenText(guess['league'] ?? '?', 6),
-                result: comparison.leagueResult,
-              ),
-              const SizedBox(width: 4),
-              _AttributeBox(
-                label: '👕',
-                value: _shortenText(guess['team'] ?? '?', 6),
-                result: comparison.teamResult,
-              ),
-              const SizedBox(width: 4),
-              _AttributeBox(
-                label: '📋',
-                value: _shortenPosition(guess['position'] ?? '?'),
-                result: comparison.positionResult,
-              ),
-              const SizedBox(width: 4),
-              _AgeBox(
-                age: guess['age']?.toString() ?? '?',
-                result: comparison.ageResult,
-                direction: comparison.ageDirection,
-              ),
-            ],
+          // Linha com as 5 caixas de comparação suportando mesma altura
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _CountryBox(
+                  nationality: guess['nationality'] ?? '?',
+                  result: comparison.nationalityResult,
+                ),
+                const SizedBox(width: 4),
+                _AttributeBox(
+                  icon: Icons.emoji_events,
+                  value: guess['league'] ?? '?',
+                  result: comparison.leagueResult,
+                ),
+                const SizedBox(width: 4),
+                _AttributeBox(
+                  icon: Icons.shield,
+                  value: guess['team'] ?? '?',
+                  result: comparison.teamResult,
+                ),
+                const SizedBox(width: 4),
+                _AttributeBox(
+                  icon: Icons.directions_run,
+                  value: _translatePosition(guess['position'] ?? '?'),
+                  result: comparison.positionResult,
+                ),
+                const SizedBox(width: 4),
+                _AgeBox(
+                  age: guess['age']?.toString() ?? '?',
+                  result: comparison.ageResult,
+                  direction: comparison.ageDirection,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// Encurta texto longo para caber na caixa.
-  String _shortenText(String text, int max) {
-    if (text.length <= max) return text;
-    return '${text.substring(0, max - 1)}…';
-  }
-
-  /// Encurta nomes de posição.
-  String _shortenPosition(String position) {
+  /// Traduz do inglês para português os nomes das posições por extenso.
+  String _translatePosition(String position) {
     switch (position.toLowerCase()) {
       case 'attacker':
-        return 'ATA';
+        return 'Atacante';
       case 'midfielder':
-        return 'MEI';
+        return 'Meio-Campo'.replaceAll('-', '\n');
       case 'defender':
-        return 'DEF';
+        return 'Defensor'; // ou Zagueiro, mas Defensor é mais amplo
       case 'goalkeeper':
-        return 'GOL';
+        return 'Goleiro';
       default:
-        return position.substring(0, 3).toUpperCase();
+        return position;
     }
   }
 }
 
 /// Caixa individual de um atributo com cor de feedback.
 class _AttributeBox extends StatelessWidget {
-  final String label;
+  final IconData icon;
   final String value;
   final GuessResult result;
 
   const _AttributeBox({
-    required this.label,
+    required this.icon,
     required this.value,
     required this.result,
   });
@@ -125,17 +124,20 @@ class _AttributeBox extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: 2),
+            Icon(icon, size: 16, color: AppColors.white.withValues(alpha: 0.9)),
+            const SizedBox(height: 4),
             Text(
               value,
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.outfit(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppColors.white,
+                height: 1.1,
               ),
               textAlign: TextAlign.center,
+              maxLines: 4, // Permite 4 linhas de texto antes do ellipsis
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -170,7 +172,7 @@ class _CountryBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
         decoration: BoxDecoration(
           color: _colorForResult(result),
           borderRadius: BorderRadius.circular(8),
@@ -188,27 +190,23 @@ class _CountryBox extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
-              _shortenText(nationality, 5),
-              style: GoogleFonts.jetBrainsMono(
+              nationality,
+              style: GoogleFonts.outfit(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppColors.white,
+                height: 1.1,
               ),
               textAlign: TextAlign.center,
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
     );
-  }
-
-  /// Encurta texto longo para caber na caixa.
-  String _shortenText(String text, int max) {
-    if (text.length <= max) return text;
-    return '${text.substring(0, max - 1)}…';
   }
 
   Color _colorForResult(GuessResult result) {
@@ -237,14 +235,6 @@ class _AgeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ícone da seta baseado na direção
-    String arrow = '';
-    if (direction == AgeDirection.higher) {
-      arrow = ' ⬆️';
-    } else if (direction == AgeDirection.lower) {
-      arrow = ' ⬇️';
-    }
-
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
@@ -253,17 +243,26 @@ class _AgeBox extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🎂', style: TextStyle(fontSize: 12)),
-            const SizedBox(height: 2),
-            Text(
-              '$age$arrow',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppColors.white,
-              ),
-              textAlign: TextAlign.center,
+            Icon(Icons.calendar_today, size: 16, color: AppColors.white.withValues(alpha: 0.9)),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  age,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.white,
+                  ),
+                ),
+                if (direction == AgeDirection.higher)
+                  const Icon(Icons.arrow_upward, size: 14, color: AppColors.white),
+                if (direction == AgeDirection.lower)
+                  const Icon(Icons.arrow_downward, size: 14, color: AppColors.white),
+              ],
             ),
           ],
         ),

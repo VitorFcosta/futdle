@@ -181,7 +181,7 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
                     ),
                   ),
                   subtitle: Text(
-                    '${player['team']} • ${player['league']}',
+                    '${player['team']} • ${_translatePosition(player['position'] ?? '')}',
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 11,
                       color: AppColors.grey,
@@ -200,5 +200,21 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
           ),
       ],
     );
+  }
+
+  /// Traduz do inglês para português os nomes das posições por extenso.
+  String _translatePosition(String position) {
+    switch (position.toLowerCase()) {
+      case 'attacker':
+        return 'Atacante';
+      case 'midfielder':
+        return 'Meio-Campo';
+      case 'defender':
+        return 'Defensor'; // ou Zagueiro
+      case 'goalkeeper':
+        return 'Goleiro';
+      default:
+        return position;
+    }
   }
 }

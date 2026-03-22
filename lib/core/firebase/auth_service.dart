@@ -4,12 +4,6 @@ import '../exceptions/app_exceptions.dart';
 import '../logger/app_logger.dart';
 
 /// Serviço responsável por toda a autenticação do app.
-///
-/// Encapsula o [FirebaseAuth] e gerencia:
-/// - Criação de conta (signUp)
-/// - Login (signIn)
-/// - Logout (signOut)
-/// - Estado de autenticação (authStateChanges)
 class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
@@ -21,22 +15,9 @@ class AuthService {
   /// Retorna o usuário logado atualmente, ou `null` se não estiver logado.
   User? get currentUser => _auth.currentUser;
 
-  /// Stream que emite o estado de autenticação toda vez que muda.
-  /// Usado pelo [AuthGate] para decidir qual tela mostrar.
-  ///
-  /// Lança:
-  /// - Um [User] quando o usuário faz login
-  /// - `null` quando o usuário faz logout
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   /// Cria uma nova conta com email e senha.
-  ///
-  /// Após criar a conta no Firebase Auth, salva o perfil do usuário
-  /// no Firestore (coleção `users`) com:
-  /// `displayName`: nome digitado pelo usuário
-  /// `email`: email da conta
-  /// `createdAt`: timestamp do servidor
-  ///
   /// Lança [AuthException] se algo der errado (email já existe, senha fraca, etc.)
   Future<User?> signUp({
     required String name,
@@ -76,8 +57,6 @@ class AuthService {
   }
 
   /// Faz login com email e senha.
-  ///
-  /// Retorna o [User] logado.
   /// Lança [AuthException] se email/senha estiverem incorretos.
   Future<User?> signIn({
     required String email,
@@ -105,7 +84,6 @@ class AuthService {
   }
 
   /// Converte os códigos de erro do Firebase Auth em mensagens
-  /// amigáveis em português para exibir na UI.
   String _mapFirebaseAuthError(String code) {
     switch (code) {
       case 'email-already-in-use':
