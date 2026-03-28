@@ -75,34 +75,31 @@ Siga os passos abaixo para testar a aplicação na sua máquina:
 
 1. Pré-requisitos:
 
-Ter o Flutter SDK instalado (SDK ^3.11.1).
-
-Ter um emulador configurado ou dispositivo conectado.
-
-Opcional: Firebase CLI instalado, caso deseje reconfigurar o backend com seu próprio projeto (flutterfire configure).
+Ter o Flutter SDK instalado (SDK ^3.11.1)
+Ter um emulador configurado ou dispositivo conectado
 
 2. Clonando o repositório:
 
-Bash
+```
 git clone [https://github.com/VitorFcosta/futdle.git](https://github.com/VitorFcosta/futdle.git)
 cd futdle
+```
 3. Configure as variáveis de ambiente (.env):
 
-Na raiz do projeto, você verá um arquivo chamado .env.example.
-
-Crie um arquivo novo chamado .env no mesmo local.
-
-Copie o conteúdo de .env.example para dentro do .env e substitua a chave pela sua chave real da API-Sports.
+Na raiz do projeto, você verá um arquivo chamado .env.example
+Crie um arquivo novo chamado .env no mesmo local
+Copie o conteúdo de .env.example para dentro do .env e substitua a chave pela sua chave real da API-Sports
 
 4. Instalando dependências:
-
-Bash
+````
 flutter pub get
+````
 5. Rodando o aplicativo:
 
-Bash
+```
 flutter run
-📱 Prints da Aplicação
+```
+## 📱 Prints da Aplicação
 
 <p align="center">
   <img src="Imagens/flutter_01.png" width="200" alt="Tela Inicial">
