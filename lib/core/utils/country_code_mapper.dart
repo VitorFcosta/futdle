@@ -98,15 +98,12 @@ class CountryCodeMapper {
       case 'uruguay':
         return 'UY';
       case 'wales':
-        return 'GB-WLS'; // País de Gales tem bandeira própria
+        return 'GB-WLS'; 
       case 'scotland':
-        return 'GB-SCT'; // Escócia tem bandeira própria
+        return 'GB-SCT'; 
       case 'northern ireland':
-        return 'GB-NIR'; // Irlanda do Norte
+        return 'GB-NIR'; 
       default:
-        // Caso genérico se não for mapeado.
-        // Retorna o próprio nome abreviado ou um valor vazio/genérico.
-        // O country_flags lidará retornando um erro ou widget vazio se o código for inválido.
         if (name.length >= 2) {
           return name.substring(0, 2).toUpperCase();
         }

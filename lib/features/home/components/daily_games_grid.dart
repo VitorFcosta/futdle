@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:futdle/models/mini_game_model.dart';
+import 'package:futdle/core/models/mini_game_model.dart';
 import 'package:futdle/core/theme/app_colors.dart';
 import 'package:futdle/features/wordle/pages/wordle_page.dart';
 
@@ -45,7 +45,6 @@ class _GameCircle extends StatelessWidget {
   const _GameCircle({required this.game});
 
   /// Navega para a tela do jogo correspondente.
-  /// Por enquanto, apenas o Wordle tem tela implementada.
   void _navigateToGame(BuildContext context) {
     if (game.id == 'wordle') {
       Navigator.push(
@@ -53,7 +52,6 @@ class _GameCircle extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const WordlePage()),
       );
     }
-    // Os outros jogos serão implementados futuramente
   }
 
   @override

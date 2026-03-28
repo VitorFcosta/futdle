@@ -3,12 +3,6 @@ import 'package:futdle/core/theme/app_colors.dart';
 import 'package:futdle/features/admin/pages/admin_page.dart';
 
 /// Cabeçalho da Home com logo do app, avatar do usuário e botão de logout.
-///
-/// O avatar usa [CircleAvatar] mostrando a primeira letra do nome do usuário
-/// dentro de um círculo com a cor primária do app.
-///
-/// O [onLogout] é um callback opcional chamado quando o usuário
-/// toca no ícone de logout. Se for `null`, o ícone não aparece.
 class HomeHeader extends StatelessWidget {
   final String username;
   final VoidCallback? onLogout;

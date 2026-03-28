@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:futdle/core/models/player_model.dart';
 import 'package:futdle/core/firebase/firestore_service.dart';
 import 'package:futdle/core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -131,7 +132,7 @@ class _WordleHistoryPageState extends State<WordleHistoryPage> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => WordlePage(
-                            targetPlayerToPlay: item,
+                            targetPlayerToPlay: PlayerModel.fromFlatMap(item),
                             isDailyStreak: false,
                           ),
                         ),

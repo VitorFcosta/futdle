@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futdle/core/theme/app_colors.dart';
-import 'package:futdle/game_manager.dart';
+import 'package:futdle/core/managers/daily_player_manager.dart';
+import 'package:futdle/core/di/injection.dart';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
@@ -10,8 +11,9 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
-  final GameManager _gameManager = GameManager();
+  final DailyPlayerManager _gameManager = getIt<DailyPlayerManager>();
   bool _isLoading = false;
+  bool _isUpdatingDb = false;
 
   Future<void> _drawDailyPlayer() async {
     setState(() => _isLoading = true);
@@ -41,6 +43,38 @@ class _AdminPageState extends State<AdminPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _updateDatabase() async {
+    setState(() => _isUpdatingDb = true);
+
+    try {
+      final updatedCount = await _gameManager.updateAllPlayersWithCrests();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$updatedCount jogadores atualizados com escudos e emblemas!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao atualizar banco: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingDb = false);
       }
     }
   }
@@ -109,6 +143,40 @@ class _AdminPageState extends State<AdminPage> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _isUpdatingDb ? null : _updateDatabase,
+                  icon: _isUpdatingDb
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.sync, color: Colors.white),
+                  label: Text(
+                    _isUpdatingDb
+                        ? 'Atualizando Banco...'
+                        : 'Atualizar Escudos no Banco',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

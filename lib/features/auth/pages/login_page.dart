@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:futdle/core/firebase/auth_service.dart';
 import 'package:futdle/core/theme/app_colors.dart';
+import 'package:futdle/core/di/injection.dart';
+import 'package:futdle/features/auth/controllers/auth_controller.dart';
 import 'package:futdle/features/auth/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Tela de login do FutDLE.
-///
-/// Contém:
-/// - Logo e título do app no topo
-/// - Campo de email com validação
-/// - Campo de senha (obscurecido)
-/// - Botão "Entrar" que chama [AuthService.signIn]
-/// - Link "Criar conta" que navega para [RegisterPage]
-/// - Tratamento de erros com SnackBar
-///
-/// O design segue o design system do app (cores de [AppColors],
-/// fontes Outfit para títulos e JetBrains Mono para corpo).
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -24,51 +14,29 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Controllers para capturar o texto digitado nos campos
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Key do formulário para validação
   final _formKey = GlobalKey<FormState>();
-
-  // Serviço de autenticação
-  final _authService = AuthService();
-
-  // Flag para mostrar loading no botão enquanto processa
-  bool _isLoading = false;
+  final _authController = getIt<AuthController>();
 
   @override
   void dispose() {
-    // Libera os controllers quando o widget é destruído
-    // para evitar vazamento de memória
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  /// Executa o login quando o botão "Entrar" é pressionado.
-  ///
-  /// 1. Valida os campos do formulário
-  /// 2. Mostra loading
-  /// 3. Chama [AuthService.signIn]
-  /// 4. Se der erro, mostra SnackBar com a mensagem
-  /// 5. O [AuthGate] detecta automaticamente o login e troca pra Home
   Future<void> _handleLogin() async {
-    // Verifica se os campos são válidos (email preenchido, senha preenchida)
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-
     try {
-      await _authService.signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+      await _authController.login(
+        _emailController.text.trim(),
+        _passwordController.text,
       );
-      // Não precisa navegar manualmente!
-      // O AuthGate detecta o login via authStateChanges e mostra a Home
     } catch (e) {
       if (mounted) {
-        // Mostra mensagem de erro amigável na barra inferior
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('AuthException: ', '')),
@@ -76,8 +44,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -94,11 +60,9 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ===== LOGO / TÍTULO =====
-                  // Ícone de futebol grande como "logo" do app
+                  // LOGO / TÍTULO 
                   Icon(Icons.sports_soccer, size: 64, color: AppColors.primary),
                   const SizedBox(height: 16),
-                  // Título "FutDLE" com a fonte Outfit (mesma do header da Home)
                   Text(
                     'FutDLE',
                     style: GoogleFonts.outfit(
@@ -118,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 48),
 
-                  // ===== CAMPO DE EMAIL =====
+                  // CAMPO DE EMAIL 
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -134,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== CAMPO DE SENHA =====
+                  // CAMPO DE SENHA 
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true, // esconde o texto da senha
@@ -149,42 +113,47 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 32),
 
-                  // ===== BOTÃO ENTRAR =====
-                  // Botão largo que ocupa toda a largura disponível
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: AppColors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : Text(
-                              'Entrar',
-                              style: GoogleFonts.outfit(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
+                  //  BOTÃO ENTRAR 
+
+                  ListenableBuilder(
+                    listenable: _authController,
+                    builder: (context, child) {
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: _authController.isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                    ),
+                            elevation: 0,
+                          ),
+                          child: _authController.isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text(
+                                  'Entrar',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
-                  // ===== LINK PARA REGISTRO =====
+                  //  LINK PARA REGISTRO 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

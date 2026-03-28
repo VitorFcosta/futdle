@@ -1,3 +1,5 @@
+import 'package:futdle/core/models/player_model.dart';
+
 // Lógica central do jogo Wordle do FutDLE.
 //
 // Esta classe contém toda a lógica de comparação entre o palpite
@@ -39,7 +41,7 @@ enum AgeDirection {
 
 /// Resultado completo de um palpite, com o resultado de cada atributo.
 class GuessComparison {
-  final Map<String, dynamic> guessPlayer;
+  final PlayerModel guessPlayer;
   final GuessResult nationalityResult;
   final GuessResult leagueResult;
   final GuessResult teamResult;
@@ -72,28 +74,28 @@ class WordleGameLogic {
   ///
   /// Retorna um [GuessComparison] com o resultado de cada atributo.
   static GuessComparison compare(
-    Map<String, dynamic> guess,
-    Map<String, dynamic> target,
+    PlayerModel guess,
+    PlayerModel target,
   ) {
     // Verifica se é o jogador correto (acertou!)
     final isCorrect =
-        (guess['name'] as String).toLowerCase() ==
-        (target['name'] as String).toLowerCase();
+        guess.name.toLowerCase() ==
+        target.name.toLowerCase();
 
     // Compara nacionalidade: igual → correct, senão → wrong
     final nationalityResult = _compareString(
-      guess['nationality'],
-      target['nationality'],
+      guess.nationality,
+      target.nationality,
     );
 
     // Compara liga: igual → correct, senão → wrong
-    final leagueResult = _compareString(guess['league'], target['league']);
+    final leagueResult = _compareString(guess.statistics?.leagueName, target.statistics?.leagueName);
 
     // Compara time: igual → correct, mesma liga → partial, senão → wrong
     GuessResult teamResult;
-    if (_strEquals(guess['team'], target['team'])) {
+    if (_strEquals(guess.statistics?.teamName, target.statistics?.teamName)) {
       teamResult = GuessResult.correct;
-    } else if (_strEquals(guess['league'], target['league'])) {
+    } else if (_strEquals(guess.statistics?.leagueName, target.statistics?.leagueName)) {
       // Mesmo campeonato mas time diferente = parcial
       teamResult = GuessResult.partial;
     } else {
@@ -102,13 +104,13 @@ class WordleGameLogic {
 
     // Compara posição: igual → correct, senão → wrong
     final positionResult = _compareString(
-      guess['position'],
-      target['position'],
+      guess.statistics?.position,
+      target.statistics?.position,
     );
 
     // Compara idade: igual → correct, diferença ≤ 2 → partial, senão → wrong
-    final guessAge = guess['age'] as int? ?? 0;
-    final targetAge = target['age'] as int? ?? 0;
+    final guessAge = guess.age ?? 0;
+    final targetAge = target.age ?? 0;
     final ageDiff = (guessAge - targetAge).abs();
 
     GuessResult ageResult;

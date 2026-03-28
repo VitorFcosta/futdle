@@ -93,13 +93,21 @@ class ApiService {
       final selectedPlayer = playersOnly[random.nextInt(playersOnly.length)];
 
       // 6. Formata os dados para o padrão do Firestore do aplicativo
+      // Captura o escudo do time
+      final teamCrest = randomTeam['crest'];
+
+      // Monta a URL do emblema da liga a partir do código
+      final leagueEmblem = 'https://crests.football-data.org/$leagueCode.png';
+
       return {
         'name': selectedPlayer['name'],
         'nameLower': selectedPlayer['name'].toString().toLowerCase(),
         'age': _calculateAge(selectedPlayer['dateOfBirth']),
         'nationality': selectedPlayer['nationality'],
         'team': teamName,
+        'teamCrest': teamCrest,
         'league': leagueCode,
+        'leagueEmblem': leagueEmblem,
         'position': selectedPlayer['position'],
       };
     } catch (e) {

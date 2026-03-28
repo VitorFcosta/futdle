@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:futdle/core/theme/app_colors.dart';
 import 'package:futdle/features/wordle/wordle_game_logic.dart';
-import 'package:futdle/models/user_stats.dart';
+import 'package:futdle/core/models/user_stats.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:futdle/features/wordle/pages/wordle_history_page.dart';
 

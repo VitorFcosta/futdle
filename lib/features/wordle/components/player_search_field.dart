@@ -202,17 +202,17 @@ class _PlayerSearchFieldState extends State<PlayerSearchField> {
     );
   }
 
-  /// Traduz do inglês para português os nomes das posições por extenso.
+  /// Retorna abreviações das posições em PT-BR.
   String _translatePosition(String position) {
     switch (position.toLowerCase()) {
       case 'attacker':
-        return 'Atacante';
+        return 'ATA';
       case 'midfielder':
-        return 'Meio-Campo';
+        return 'MEI';
       case 'defender':
-        return 'Defensor'; // ou Zagueiro
+        return 'ZAG';
       case 'goalkeeper':
-        return 'Goleiro';
+        return 'GOL';
       default:
         return position;
     }

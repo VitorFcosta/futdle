@@ -1,9 +1,10 @@
 import 'dart:math';
-import 'core/api/api_service.dart';
-import 'core/api/api_constants.dart';
-import 'core/firebase/firestore_service.dart';
-import 'core/exceptions/app_exceptions.dart';
-import 'core/logger/app_logger.dart';
+import 'package:futdle/core/api/api_service.dart';
+import 'package:futdle/core/api/api_constants.dart';
+import 'package:futdle/core/firebase/firestore_service.dart';
+import 'package:futdle/core/exceptions/app_exceptions.dart';
+import 'package:futdle/core/logger/app_logger.dart';
+import 'package:futdle/core/di/injection.dart';
 
 /// Gerenciador principal dos jogos.
 /// Orquestra a lógica de negócio (sortear jogador do dia)
@@ -13,13 +14,13 @@ import 'core/logger/app_logger.dart';
 /// pelo script [FetchAndImportPlayers]. O GameManager apenas
 /// sorteia um aleatório da collection `player_list` e o salva
 /// como o jogador do dia em `daily_player`.
-class GameManager {
+class DailyPlayerManager {
   final FirestoreService _firestoreService;
   final ApiService _apiService;
 
-  GameManager({FirestoreService? firestoreService, ApiService? apiService})
-    : _firestoreService = firestoreService ?? FirestoreService(),
-      _apiService = apiService ?? ApiService();
+  DailyPlayerManager({FirestoreService? firestoreService, ApiService? apiService})
+    : _firestoreService = firestoreService ?? getIt<FirestoreService>(),
+      _apiService = apiService ?? getIt<ApiService>();
 
   /// Sorteia um jogador aleatório da collection `player_list` do Firestore
   /// e o salva como jogador do dia na collection `daily_player`.
@@ -99,4 +100,41 @@ class GameManager {
       }
     }
   }
+
+  /// Método utilitário para atualizar todos os jogadores no Firestore
+  /// com os campos `teamCrest` e `leagueEmblem`, usando os dados da API.
+  /// Isso é necessário pois os jogadores já existentes no banco não têm esses campos.
+  Future<int> updateAllPlayersWithCrests() async {
+    AppLogger.info('Iniciando atualização em lote dos escudos no Firestore...');
+
+    try {
+      // 1. Cria um dicionário com todos os times das topLeagues
+      final Map<String, String> teamCrestsMap = {};
+      
+      for (final leagueCode in ApiConstants.topLeagues) {
+        AppLogger.info('Buscando times da liga: $leagueCode');
+        try {
+          final teams = await _apiService.fetchTeamsByLeague(leagueCode);
+          for (final team in teams) {
+            final teamName = team['shortName'] ?? team['name'];
+            if (teamName != null && team['crest'] != null) {
+              // Usamos lowerCase pro match ser mais fácil
+              teamCrestsMap[teamName.toString().toLowerCase()] = team['crest'];
+            }
+          }
+          // Delay menor só pra evitar rate limit caso a API seja chata
+          await Future.delayed(const Duration(milliseconds: 500));
+        } catch (e) {
+          AppLogger.error('Erro ao buscar times da liga $leagueCode: $e');
+        }
+      }
+
+      return await _firestoreService.updatePlayersWithCrests(teamCrestsMap);
+      
+    } catch (e) {
+      AppLogger.error('Erro geral ao atualizar escudos: $e');
+      rethrow;
+    }
+  }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_gate.dart';
+import 'core/di/injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,8 @@ void main() async {
   await dotenv.load(fileName: ".env");
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  setupDependencyInjection();
 
   runApp(const FutdleApp());
 }

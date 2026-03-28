@@ -4,15 +4,6 @@ import 'package:futdle/core/firebase/auth_service.dart';
 import 'package:futdle/features/auth/pages/login_page.dart';
 import 'package:futdle/features/home/pages/home_page.dart';
 
-/// Widget "porteiro" que decide qual tela mostrar baseado no estado de login.
-///
-/// Funciona assim:
-/// - Escuta o [authStateChanges] do Firebase Auth (uma Stream)
-/// - Se o usuário ESTÁ logado → mostra a [HomePage] com o nome real
-/// - Se NÃO está logado → mostra a [LoginPage]
-///
-/// Usa [StreamBuilder] para reagir automaticamente a mudanças
-/// (quando o usuário faz login/logout, a tela muda sozinha).
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

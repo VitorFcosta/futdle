@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:futdle/core/firebase/auth_service.dart';
 import 'package:futdle/core/theme/app_colors.dart';
+import 'package:futdle/core/di/injection.dart';
+import 'package:futdle/features/auth/controllers/auth_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Tela de registro (criação de conta) do FutDLE.
@@ -31,8 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
-  bool _isLoading = false;
+  final _authController = getIt<AuthController>();
 
   @override
   void dispose() {
@@ -52,18 +52,14 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-
     try {
-      await _authService.signUp(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+      await _authController.register(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
       );
 
       if (mounted) {
-        // Volta pra tela anterior (LoginPage)
-        // O AuthGate já vai detectar o login e mostrar a Home
         Navigator.pop(context);
       }
     } catch (e) {
@@ -75,8 +71,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -192,36 +186,41 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 32),
 
                   // ===== BOTÃO CRIAR CONTA =====
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleRegister,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: AppColors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : Text(
-                              'Criar conta',
-                              style: GoogleFonts.outfit(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
+                  ListenableBuilder(
+                    listenable: _authController,
+                    builder: (context, child) {
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: _authController.isLoading ? null : _handleRegister,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                    ),
+                            elevation: 0,
+                          ),
+                          child: _authController.isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text(
+                                  'Criar conta',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 

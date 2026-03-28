@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:futdle/core/theme/app_colors.dart';
 import 'package:futdle/core/utils/country_code_mapper.dart';
 import 'package:futdle/features/wordle/wordle_game_logic.dart';
@@ -33,7 +34,7 @@ class PlayerGuessRow extends StatelessWidget {
         children: [
           // Nome do jogador palpitado acima das caixas
           Text(
-            guess['name'] ?? '',
+            guess.name,
             style: GoogleFonts.outfit(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -50,30 +51,32 @@ class PlayerGuessRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _CountryBox(
-                  nationality: guess['nationality'] ?? '?',
+                  nationality: guess.nationality ?? '?',
                   result: comparison.nationalityResult,
                 ),
                 const SizedBox(width: 4),
-                _AttributeBox(
-                  icon: Icons.emoji_events,
-                  value: guess['league'] ?? '?',
+                _CrestBox(
+                  imageUrl: guess.statistics?.leagueEmblem,
+                  label: guess.statistics?.leagueName ?? '?',
                   result: comparison.leagueResult,
+                  fallbackIcon: Icons.emoji_events,
                 ),
                 const SizedBox(width: 4),
-                _AttributeBox(
-                  icon: Icons.shield,
-                  value: guess['team'] ?? '?',
+                _CrestBox(
+                  imageUrl: guess.statistics?.teamCrest,
+                  label: guess.statistics?.teamName ?? '?',
                   result: comparison.teamResult,
+                  fallbackIcon: Icons.shield,
                 ),
                 const SizedBox(width: 4),
                 _AttributeBox(
                   icon: Icons.directions_run,
-                  value: _translatePosition(guess['position'] ?? '?'),
+                  value: _abbreviatePosition(guess.statistics?.position ?? '?'),
                   result: comparison.positionResult,
                 ),
                 const SizedBox(width: 4),
                 _AgeBox(
-                  age: guess['age']?.toString() ?? '?',
+                  age: guess.age?.toString() ?? '?',
                   result: comparison.ageResult,
                   direction: comparison.ageDirection,
                 ),
@@ -85,19 +88,103 @@ class PlayerGuessRow extends StatelessWidget {
     );
   }
 
-  /// Traduz do inglês para português os nomes das posições por extenso.
-  String _translatePosition(String position) {
+  /// Retorna abreviações das posições em PT-BR.
+  String _abbreviatePosition(String position) {
     switch (position.toLowerCase()) {
       case 'attacker':
-        return 'Atacante';
+        return 'ATA';
       case 'midfielder':
-        return 'Meio-Campo'.replaceAll('-', '\n');
+        return 'MEI';
       case 'defender':
-        return 'Defensor'; // ou Zagueiro, mas Defensor é mais amplo
+        return 'ZAG';
       case 'goalkeeper':
-        return 'Goleiro';
+        return 'GOL';
       default:
         return position;
+    }
+  }
+}
+
+/// Caixa com escudo/emblema carregado da rede + label de texto.
+/// Usa [CachedNetworkImage] para cache local das imagens.
+/// Se a URL for nula ou falhar, mostra um ícone fallback.
+class _CrestBox extends StatelessWidget {
+  final String? imageUrl;
+  final String label;
+  final GuessResult result;
+  final IconData fallbackIcon;
+
+  const _CrestBox({
+    required this.imageUrl,
+    required this.label,
+    required this.result,
+    required this.fallbackIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        decoration: BoxDecoration(
+          color: _colorForResult(result),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Escudo / Emblema
+            SizedBox(
+              width: 26,
+              height: 26,
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Icon(
+                        fallbackIcon,
+                        size: 20,
+                        color: AppColors.white.withValues(alpha: 0.7),
+                      ),
+                      errorWidget: (context, url, error) => Icon(
+                        fallbackIcon,
+                        size: 20,
+                        color: AppColors.white.withValues(alpha: 0.9),
+                      ),
+                    )
+                  : Icon(
+                      fallbackIcon,
+                      size: 20,
+                      color: AppColors.white.withValues(alpha: 0.9),
+                    ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+                height: 1.1,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _colorForResult(GuessResult result) {
+    switch (result) {
+      case GuessResult.correct:
+        return AppColors.success;
+      case GuessResult.partial:
+        return AppColors.warning;
+      case GuessResult.wrong:
+        return AppColors.error;
     }
   }
 }
@@ -131,13 +218,13 @@ class _AttributeBox extends StatelessWidget {
             Text(
               value,
               style: GoogleFonts.outfit(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
                 color: AppColors.white,
                 height: 1.1,
               ),
               textAlign: TextAlign.center,
-              maxLines: 4, // Permite 4 linhas de texto antes do ellipsis
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
           ],

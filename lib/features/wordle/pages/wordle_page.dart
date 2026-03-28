@@ -6,11 +6,12 @@ import 'package:futdle/features/wordle/wordle_game_logic.dart';
 import 'package:futdle/features/wordle/components/player_guess_row.dart';
 import 'package:futdle/features/wordle/components/player_search_field.dart';
 import 'package:futdle/features/wordle/components/wordle_stats_modal.dart';
-import 'package:futdle/models/user_stats.dart';
+import 'package:futdle/core/models/user_stats.dart';
+import 'package:futdle/core/models/player_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class WordlePage extends StatefulWidget {
-  final Map<String, dynamic>? targetPlayerToPlay;
+  final PlayerModel? targetPlayerToPlay;
   final bool isDailyStreak;
 
   const WordlePage({
@@ -27,7 +28,7 @@ class _WordlePageState extends State<WordlePage> {
   final _firestoreService = FirestoreService();
   final _authService = AuthService();
 
-  Map<String, dynamic>? _targetPlayer;
+  PlayerModel? _targetPlayer;
   final List<GuessComparison> _guesses = [];
   final List<String> _guessedNames = [];
 
@@ -55,14 +56,17 @@ class _WordlePageState extends State<WordlePage> {
         _userStats = await _firestoreService.getUserStats(user.uid);
       }
 
-      Map<String, dynamic>? player;
+      PlayerModel? player;
 
       if (widget.targetPlayerToPlay != null) {
         player = widget.targetPlayerToPlay;
-        _dateId = player?['dateId']; // Vem do Firebase
+        _dateId = 'HISTORIC'; // Se vier um modelo pronto, provável não tem dateId cru, ou trata no modal
       } else {
-        player = await _firestoreService.getDailyPlayer();
-        _dateId = player?['dateId'];
+        final rawPlayer = await _firestoreService.getDailyPlayer();
+        if (rawPlayer != null) {
+          player = PlayerModel.fromFlatMap(rawPlayer);
+          _dateId = rawPlayer['dateId'];
+        }
       }
 
       if (player == null) {
@@ -108,16 +112,17 @@ class _WordlePageState extends State<WordlePage> {
     }
   }
 
-  void _onPlayerGuessed(Map<String, dynamic> guessPlayer) {
+  void _onPlayerGuessed(Map<String, dynamic> guessPlayerMap) {
     if (_targetPlayer == null || _hasWon || _hasLost || _alreadyPlayedToday) {
       return;
     }
 
+    final guessPlayer = PlayerModel.fromFlatMap(guessPlayerMap);
     final comparison = WordleGameLogic.compare(guessPlayer, _targetPlayer!);
 
     setState(() {
       _guesses.add(comparison);
-      _guessedNames.add(guessPlayer['name'] as String);
+      _guessedNames.add(guessPlayer.name);
 
       if (comparison.isCorrect) {
         _hasWon = true;
@@ -403,7 +408,7 @@ class _WordlePageState extends State<WordlePage> {
           ),
           const SizedBox(height: 4),
           Text(
-            'O jogador era ${_targetPlayer?['name']}',
+            'O jogador era ${_targetPlayer?.name}',
             style: GoogleFonts.jetBrainsMono(
               fontSize: 14,
               color: AppColors.dark,
@@ -452,7 +457,7 @@ class _WordlePageState extends State<WordlePage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _targetPlayer?['name'] ?? '???',
+            _targetPlayer?.name ?? '???',
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -460,7 +465,7 @@ class _WordlePageState extends State<WordlePage> {
             ),
           ),
           Text(
-            '${_targetPlayer?['team']} • ${_targetPlayer?['league']}',
+            '${_targetPlayer?.statistics?.teamName ?? ''} • ${_targetPlayer?.statistics?.leagueName ?? ''}',
             style: GoogleFonts.jetBrainsMono(
               fontSize: 13,
               color: AppColors.grey,

@@ -27,37 +27,6 @@ class MiniGameModel {
         icon: Icons.person_search,
         color: Color(0xFF2980B9),
       ),
-      MiniGameModel(
-        id: 'silhouette',
-        name: 'Silhueta',
-        icon: Icons.person_outline,
-        color: Color(0xFF8E44AD),
-      ),
-      MiniGameModel(
-        id: 'shirt_number',
-        name: 'Camisa',
-        icon: Icons.sports_soccer,
-        color: Color(0xFF27AE60),
-      ),
-      MiniGameModel(
-        id: 'career_path',
-        name: 'Carreira',
-        icon: Icons.timeline,
-        color: Color(0xFFE67E22),
-      ),
-      MiniGameModel(
-        id: 'stats_quiz',
-        name: 'Stats',
-        icon: Icons.bar_chart,
-        color: Color(0xFFE74C3C),
-      ),
-      MiniGameModel(
-        id: 'logo_quiz',
-        name: 'Escudo',
-        icon: Icons.shield,
-        color: Color(0xFF1ABC9C),
-        isAvailable: false,
-      ),
     ];
   }
 }

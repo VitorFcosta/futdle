@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/player_model.dart';
-import '../../models/user_stats.dart';
+import '../models/player_model.dart';
+import '../models/user_stats.dart';
 import '../exceptions/app_exceptions.dart';
 
 /// Serviço responsável por toda interação com o Firestore.
@@ -25,7 +25,9 @@ class FirestoreService {
         'age': player.age,
         'nationality': player.nationality,
         'team': stats?.teamName,
+        'teamCrest': stats?.teamCrest,
         'league': stats?.leagueName,
+        'leagueEmblem': stats?.leagueEmblem,
         'position': stats?.position,
         'photo': player.photo,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -105,6 +107,57 @@ class FirestoreService {
               .contains(queryLower),
         )
         .toList();
+  }
+
+  /// NOVO: Iterar por toda a coleção `player_list` e atualizar `teamCrest` e `leagueEmblem`
+  /// usando o mapeamento fornecido [teamCrestsMap] do nome do time em lowerCase para a URL.
+  Future<int> updatePlayersWithCrests(Map<String, String> teamCrestsMap) async {
+    try {
+      final snapshot = await _db.collection('player_list').get();
+      int updatedCount = 0;
+      
+      // Batch writes permitem até 500 operações por vez. 
+      // Como devemos ter menos de 500 players, 1 batch pode ser suficiente.
+      // Se tiver mais, dividimos.
+      final int batchSize = 450; 
+      
+      for (int i = 0; i < snapshot.docs.length; i += batchSize) {
+        final batch = _db.batch();
+        final end = (i + batchSize > snapshot.docs.length) 
+           ? snapshot.docs.length 
+           : i + batchSize;
+           
+        for (int j = i; j < end; j++) {
+           final doc = snapshot.docs[j];
+           final data = doc.data();
+           
+           final teamName = data['team']?.toString().toLowerCase();
+           final leagueCode = data['league']?.toString();
+           
+           if (teamName != null && leagueCode != null) {
+              final crestUrl = teamCrestsMap[teamName];
+              final emblemUrl = 'https://crests.football-data.org/$leagueCode.png';
+              
+              if (crestUrl != null) {
+                 batch.update(doc.reference, {
+                   'teamCrest': crestUrl,
+                   'leagueEmblem': emblemUrl,
+                 });
+                 updatedCount++;
+              }
+           }
+        }
+        
+        await batch.commit();
+      }
+      
+      // Limpar cache local após atualizar
+      _playersCache = null;
+      
+      return updatedCount;
+    } catch (e) {
+      throw FirestoreException('Erro ao atualizar times em batch: $e');
+    }
   }
 
   // ==========================================
