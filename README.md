@@ -25,7 +25,7 @@ Este projeto foi desenvolvido como requisito de avaliação da disciplina, cumpr
 
 Para otimizar o consumo da API externa e garantir a escalabilidade do jogo, a aplicação foi arquitetada para que o App Flutter se comunique apenas com o Firebase. O Firebase, por sua vez, é alimentado diariamente com os dados da API de esportes.
 
-![Desenho da Arquitetura do FutDle]([https://github.com/VitorFcosta/futdle/blob/main/FootEDL.drawio.png](https://github.com/VitorFcosta/futdle/blob/main/Imagens/FootEDL.drawio.png))
+![Desenho da Arquitetura do FutDle](https://github.com/VitorFcosta/futdle/blob/main/Imagens/FootEDL.drawio.png)
 
 ---
 
